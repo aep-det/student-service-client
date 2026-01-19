@@ -26,13 +26,17 @@ function App() {
             <NavLink to="/" end>
               Home
             </NavLink>
-            <NavLink to="/students">Students</NavLink>
-            <NavLink to="/courses">Courses</NavLink>
-            <NavLink to="/enrollments">Enrollments</NavLink>
-            <NavLink to="/lecturers">Lecturers</NavLink>
-            <NavLink to="/users">Users</NavLink>
-            <NavLink to="/admin">Admin</NavLink>
-            {isAuthenticated ? <NavLink to="/seed">Seed</NavLink> : null}
+            {isAuthenticated ? (
+              <>
+                <NavLink to="/students">Students</NavLink>
+                <NavLink to="/courses">Courses</NavLink>
+                <NavLink to="/enrollments">Enrollments</NavLink>
+                <NavLink to="/lecturers">Lecturers</NavLink>
+                <NavLink to="/users">Users</NavLink>
+                <NavLink to="/admin">Admin</NavLink>
+                <NavLink to="/seed">Seed</NavLink>
+              </>
+            ) : null}
           </nav>
         </div>
 
