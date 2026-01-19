@@ -233,8 +233,8 @@ export function CoursesPage() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              style={{ resize: 'vertical', minHeight: '80px' }}
+              rows={2}
+              style={{ resize: 'vertical', minHeight: '50px' }}
             />
           </Field>
           <Field label="Credits">
@@ -267,8 +267,8 @@ export function CoursesPage() {
             <textarea
               value={courseMetadata}
               onChange={(e) => setCourseMetadata(e.target.value)}
-              rows={2}
-              style={{ resize: 'vertical', minHeight: '60px' }}
+              rows={1}
+              style={{ resize: 'vertical', minHeight: '40px' }}
               placeholder="Optional additional metadata"
             />
           </Field>
@@ -289,14 +289,6 @@ export function CoursesPage() {
           <Field label="Title" className="form-full-width">
             <input value={title} onChange={(e) => setTitle(e.target.value)} />
           </Field>
-          <Field label="Description" className="form-full-width">
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              style={{ resize: 'vertical', minHeight: '80px' }}
-            />
-          </Field>
           <Field label="Credits">
             <input value={credits} onChange={(e) => setCredits(e.target.value)} type="number" min={1} max={10} />
           </Field>
@@ -323,13 +315,13 @@ export function CoursesPage() {
           <Field label="Capacity">
             <input value={capacity} onChange={(e) => setCapacity(e.target.value)} type="number" min={1} />
           </Field>
-          <Field label="Metadata" className="form-full-width">
+          <Field label="Description" className="form-full-width">
             <textarea
-              value={courseMetadata}
-              onChange={(e) => setCourseMetadata(e.target.value)}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               rows={2}
               style={{ resize: 'vertical', minHeight: '60px' }}
-              placeholder="Optional additional metadata"
+              placeholder="Optional course description"
             />
           </Field>
           <div className="form-actions">
