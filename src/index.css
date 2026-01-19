@@ -99,6 +99,30 @@ select:focus {
   box-shadow: 0 0 0 6px rgba(32, 227, 178, 0.12);
 }
 
+textarea {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 10px 12px;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  transition: border-color 120ms ease, background 120ms ease, box-shadow 140ms ease;
+  resize: vertical;
+}
+
+textarea:hover {
+  border-color: rgba(124, 92, 255, 0.35);
+}
+
+textarea:focus {
+  border-color: rgba(124, 92, 255, 0.6);
+  box-shadow: 0 0 0 6px rgba(124, 92, 255, 0.15);
+  outline: none;
+}
+
 @media (prefers-color-scheme: light) {
   input {
     border-color: var(--border);
@@ -106,6 +130,11 @@ select:focus {
   }
 
   select {
+    border-color: var(--border);
+    background: var(--surface);
+  }
+
+  textarea {
     border-color: var(--border);
     background: var(--surface);
   }

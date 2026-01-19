@@ -222,15 +222,20 @@ export function CoursesPage() {
 
       <Modal title="Create course" open={createOpen} onClose={closeModals}>
         {formError ? <Alert type="error">{formError}</Alert> : null}
-        <form className="form" onSubmit={onCreate}>
-          <Field label="Course code">
+        <form className="form form-two-column" onSubmit={onCreate}>
+          <Field label="Course code" className="form-full-width">
             <input value={courseCode} onChange={(e) => setCourseCode(e.target.value)} required />
           </Field>
-          <Field label="Title">
+          <Field label="Title" className="form-full-width">
             <input value={title} onChange={(e) => setTitle(e.target.value)} required />
           </Field>
-          <Field label="Description">
-            <input value={description} onChange={(e) => setDescription(e.target.value)} />
+          <Field label="Description" className="form-full-width">
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              style={{ resize: 'vertical', minHeight: '80px' }}
+            />
           </Field>
           <Field label="Credits">
             <input value={credits} onChange={(e) => setCredits(e.target.value)} type="number" min={1} max={10} />
@@ -258,8 +263,14 @@ export function CoursesPage() {
           <Field label="Capacity">
             <input value={capacity} onChange={(e) => setCapacity(e.target.value)} type="number" min={1} />
           </Field>
-          <Field label="Metadata">
-            <input value={courseMetadata} onChange={(e) => setCourseMetadata(e.target.value)} />
+          <Field label="Metadata" className="form-full-width">
+            <textarea
+              value={courseMetadata}
+              onChange={(e) => setCourseMetadata(e.target.value)}
+              rows={2}
+              style={{ resize: 'vertical', minHeight: '60px' }}
+              placeholder="Optional additional metadata"
+            />
           </Field>
           <div className="form-actions">
             <Button type="submit" disabled={saving}>
@@ -271,15 +282,20 @@ export function CoursesPage() {
 
       <Modal title="Edit course" open={editOpen} onClose={closeModals}>
         {formError ? <Alert type="error">{formError}</Alert> : null}
-        <form className="form" onSubmit={onUpdate}>
-          <Field label="Course code">
+        <form className="form form-two-column" onSubmit={onUpdate}>
+          <Field label="Course code" className="form-full-width">
             <input value={courseCode} onChange={(e) => setCourseCode(e.target.value)} />
           </Field>
-          <Field label="Title">
+          <Field label="Title" className="form-full-width">
             <input value={title} onChange={(e) => setTitle(e.target.value)} />
           </Field>
-          <Field label="Description">
-            <input value={description} onChange={(e) => setDescription(e.target.value)} />
+          <Field label="Description" className="form-full-width">
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              style={{ resize: 'vertical', minHeight: '80px' }}
+            />
           </Field>
           <Field label="Credits">
             <input value={credits} onChange={(e) => setCredits(e.target.value)} type="number" min={1} max={10} />
@@ -307,8 +323,14 @@ export function CoursesPage() {
           <Field label="Capacity">
             <input value={capacity} onChange={(e) => setCapacity(e.target.value)} type="number" min={1} />
           </Field>
-          <Field label="Metadata">
-            <input value={courseMetadata} onChange={(e) => setCourseMetadata(e.target.value)} />
+          <Field label="Metadata" className="form-full-width">
+            <textarea
+              value={courseMetadata}
+              onChange={(e) => setCourseMetadata(e.target.value)}
+              rows={2}
+              style={{ resize: 'vertical', minHeight: '60px' }}
+              placeholder="Optional additional metadata"
+            />
           </Field>
           <div className="form-actions">
             <Button type="submit" disabled={saving}>
