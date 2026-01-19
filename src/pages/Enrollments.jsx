@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { enrollmentsApi } from '../api'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Field } from '../components/Field'
 import { Modal } from '../components/Modal'
 import { Page } from '../components/Page'
+import { Snackbar } from '../components/Snackbar'
 import { Table } from '../components/Table'
 import { TableSkeleton } from '../components/Skeleton'
 
@@ -18,6 +20,9 @@ export function EnrollmentsPage() {
   const [selected, setSelected] = useState(null)
   const [formError, setFormError] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [itemToDrop, setItemToDrop] = useState(null)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', type: 'success' })
 
   const [studentId, setStudentId] = useState('')
   const [courseId, setCourseId] = useState('')
@@ -68,6 +73,10 @@ export function EnrollmentsPage() {
     reload()
   }, [])
 
+  const showSnackbar = (message, type = 'success') => {
+    setSnackbar({ open: true, message, type })
+  }
+
   const onCreate = async (e) => {
     e.preventDefault()
     setSaving(true)
@@ -79,8 +88,11 @@ export function EnrollmentsPage() {
       })
       closeModals()
       await reload()
+      showSnackbar('Enrollment created successfully', 'success')
     } catch (err) {
-      setFormError(err?.message || 'Failed to create enrollment')
+      const errorMessage = err?.message || 'Failed to create enrollment'
+      setFormError(errorMessage)
+      showSnackbar(errorMessage, 'error')
     } finally {
       setSaving(false)
     }
@@ -98,23 +110,41 @@ export function EnrollmentsPage() {
       })
       closeModals()
       await reload()
+      showSnackbar('Enrollment updated successfully', 'success')
     } catch (err) {
-      setFormError(err?.message || 'Failed to update enrollment')
+      const errorMessage = err?.message || 'Failed to update enrollment'
+      setFormError(errorMessage)
+      showSnackbar(errorMessage, 'error')
     } finally {
       setSaving(false)
     }
   }
 
-  const onDrop = async (enrollment) => {
-    const id = enrollment?.enrollmentId
-    if (!id) return
-    if (!window.confirm(`Drop enrollment ${id}?`)) return
+  const handleDropClick = (enrollment) => {
+    setItemToDrop(enrollment)
+    setConfirmOpen(true)
+  }
+
+  const handleDropConfirm = async () => {
+    const id = itemToDrop?.enrollmentId
+    if (!id) {
+      setConfirmOpen(false)
+      setItemToDrop(null)
+      return
+    }
+
     setError(null)
     try {
       await enrollmentsApi.drop(id)
       await reload()
+      showSnackbar('Enrollment dropped successfully', 'success')
     } catch (err) {
-      setError(err?.message || 'Failed to drop course')
+      const errorMessage = err?.message || 'Failed to drop enrollment'
+      setError(errorMessage)
+      showSnackbar(errorMessage, 'error')
+    } finally {
+      setConfirmOpen(false)
+      setItemToDrop(null)
     }
   }
 
@@ -158,7 +188,7 @@ export function EnrollmentsPage() {
                 <button className="btn btn-secondary" type="button" onClick={() => openEdit(r)}>
                   Edit
                 </button>
-                <button className="btn btn-secondary" type="button" onClick={() => onDrop(r)}>
+                <button className="btn btn-secondary" type="button" onClick={() => handleDropClick(r)}>
                   Drop
                 </button>
               </div>
@@ -206,6 +236,27 @@ export function EnrollmentsPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Drop Enrollment"
+        message={`Are you sure you want to drop enrollment ${itemToDrop?.enrollmentId}? This action cannot be undone.`}
+        onConfirm={handleDropConfirm}
+        onCancel={() => {
+          setConfirmOpen(false)
+          setItemToDrop(null)
+        }}
+        confirmLabel="Drop"
+        cancelLabel="Cancel"
+        variant="danger"
+      />
+
+      <Snackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        type={snackbar.type}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      />
     </Page>
   )
 }

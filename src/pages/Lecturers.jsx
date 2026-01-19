@@ -5,6 +5,7 @@ import { Button } from '../components/Button'
 import { Field } from '../components/Field'
 import { Modal } from '../components/Modal'
 import { Page } from '../components/Page'
+import { Snackbar } from '../components/Snackbar'
 import { Table } from '../components/Table'
 import { TableSkeleton } from '../components/Skeleton'
 
@@ -16,6 +17,7 @@ export function LecturersPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [formError, setFormError] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', type: 'success' })
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -64,6 +66,10 @@ export function LecturersPage() {
     reload()
   }, [])
 
+  const showSnackbar = (message, type = 'success') => {
+    setSnackbar({ open: true, message, type })
+  }
+
   const onCreate = async (e) => {
     e.preventDefault()
     setSaving(true)
@@ -80,8 +86,11 @@ export function LecturersPage() {
       })
       closeModal()
       await reload()
+      showSnackbar('Lecturer created successfully', 'success')
     } catch (err) {
-      setFormError(err?.message || 'Failed to create lecturer')
+      const errorMessage = err?.message || 'Failed to create lecturer'
+      setFormError(errorMessage)
+      showSnackbar(errorMessage, 'error')
     } finally {
       setSaving(false)
     }
@@ -158,6 +167,13 @@ export function LecturersPage() {
           </div>
         </form>
       </Modal>
+
+      <Snackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        type={snackbar.type}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      />
     </Page>
   )
 }

@@ -218,6 +218,15 @@
   border-color: var(--border);
 }
 
+.btn-danger {
+  color: #ffffff;
+  background:
+    radial-gradient(120% 200% at 10% 10%, rgba(255, 90, 115, 0.35), transparent 60%),
+    radial-gradient(120% 200% at 100% 0%, rgba(255, 90, 115, 0.55), transparent 55%),
+    linear-gradient(135deg, rgba(255, 90, 115, 0.95), rgba(255, 90, 115, 0.70));
+  box-shadow: 0 10px 30px rgba(255, 90, 115, 0.20);
+}
+
 .btn:hover {
   filter: brightness(1.05);
   transform: translateY(-1px);
@@ -429,4 +438,169 @@
   font-size: 18px;
   font-weight: 700;
   color: var(--text);
+}
+
+/* Confirm Dialog */
+.confirm-dialog {
+  width: min(420px, 100%);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(70% 160% at 10% 10%, rgba(124, 92, 255, 0.16), transparent 60%),
+    radial-gradient(80% 180% at 100% 0%, rgba(32, 227, 178, 0.10), transparent 65%),
+    rgba(16, 18, 24, 0.92);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: light) {
+  .confirm-dialog {
+    background:
+      radial-gradient(70% 160% at 10% 10%, rgba(124, 92, 255, 0.10), transparent 60%),
+      radial-gradient(80% 180% at 100% 0%, rgba(32, 227, 178, 0.08), transparent 65%),
+      rgba(255, 255, 255, 0.94);
+  }
+}
+
+.confirm-dialog-header {
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.confirm-dialog-title {
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.confirm-dialog-body {
+  padding: 18px;
+  flex: 1;
+}
+
+.confirm-dialog-body p {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 12px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+/* Snackbar */
+.snackbar {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  min-width: 300px;
+  max-width: 500px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: snackbar-slide-in 0.3s ease-out;
+  backdrop-filter: blur(14px) saturate(140%);
+}
+
+@keyframes snackbar-slide-in {
+  from {
+    transform: translateX(calc(100% + 24px));
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.snackbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.snackbar-message {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.snackbar-close {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background 120ms ease, transform 120ms ease;
+  opacity: 0.7;
+}
+
+.snackbar-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.snackbar-success {
+  background:
+    radial-gradient(120% 200% at 10% 10%, rgba(32, 227, 178, 0.25), transparent 60%),
+    radial-gradient(120% 200% at 100% 0%, rgba(32, 227, 178, 0.15), transparent 55%),
+    rgba(16, 18, 24, 0.92);
+  border-color: rgba(32, 227, 178, 0.35);
+}
+
+.snackbar-error {
+  background:
+    radial-gradient(120% 200% at 10% 10%, rgba(255, 90, 115, 0.25), transparent 60%),
+    radial-gradient(120% 200% at 100% 0%, rgba(255, 90, 115, 0.15), transparent 55%),
+    rgba(16, 18, 24, 0.92);
+  border-color: rgba(255, 90, 115, 0.35);
+}
+
+@media (prefers-color-scheme: light) {
+  .snackbar-success {
+    background:
+      radial-gradient(120% 200% at 10% 10%, rgba(32, 227, 178, 0.15), transparent 60%),
+      radial-gradient(120% 200% at 100% 0%, rgba(32, 227, 178, 0.10), transparent 55%),
+      rgba(255, 255, 255, 0.94);
+  }
+
+  .snackbar-error {
+    background:
+      radial-gradient(120% 200% at 10% 10%, rgba(255, 90, 115, 0.15), transparent 60%),
+      radial-gradient(120% 200% at 100% 0%, rgba(255, 90, 115, 0.10), transparent 55%),
+      rgba(255, 255, 255, 0.94);
+  }
+}
+
+@media (max-width: 640px) {
+  .snackbar {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+    min-width: auto;
+    max-width: none;
+  }
+
+  .confirm-dialog {
+    width: min(calc(100% - 32px), 420px);
+  }
 }

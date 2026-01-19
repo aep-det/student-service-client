@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { usersApi } from '../api'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Field } from '../components/Field'
 import { Modal } from '../components/Modal'
 import { Page } from '../components/Page'
+import { Snackbar } from '../components/Snackbar'
 import { Table } from '../components/Table'
 import { TableSkeleton } from '../components/Skeleton'
 
@@ -18,6 +20,9 @@ export function UsersPage() {
   const [selected, setSelected] = useState(null)
   const [formError, setFormError] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState(null)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', type: 'success' })
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -75,6 +80,10 @@ export function UsersPage() {
     reload()
   }, [])
 
+  const showSnackbar = (message, type = 'success') => {
+    setSnackbar({ open: true, message, type })
+  }
+
   const onCreate = async (e) => {
     e.preventDefault()
     setSaving(true)
@@ -83,8 +92,11 @@ export function UsersPage() {
       await usersApi.create({ firstName, lastName, email, password, role })
       closeModals()
       await reload()
+      showSnackbar('User created successfully', 'success')
     } catch (err) {
-      setFormError(err?.message || 'Failed to create user')
+      const errorMessage = err?.message || 'Failed to create user'
+      setFormError(errorMessage)
+      showSnackbar(errorMessage, 'error')
     } finally {
       setSaving(false)
     }
@@ -104,23 +116,41 @@ export function UsersPage() {
       })
       closeModals()
       await reload()
+      showSnackbar('User updated successfully', 'success')
     } catch (err) {
-      setFormError(err?.message || 'Failed to update user')
+      const errorMessage = err?.message || 'Failed to update user'
+      setFormError(errorMessage)
+      showSnackbar(errorMessage, 'error')
     } finally {
       setSaving(false)
     }
   }
 
-  const onDelete = async (u) => {
-    const id = u?.userId
-    if (!id) return
-    if (!window.confirm(`Delete user ${u?.email || id}?`)) return
+  const handleDeleteClick = (u) => {
+    setItemToDelete(u)
+    setConfirmOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    const id = itemToDelete?.userId
+    if (!id) {
+      setConfirmOpen(false)
+      setItemToDelete(null)
+      return
+    }
+
     setError(null)
     try {
       await usersApi.remove(id)
       await reload()
+      showSnackbar('User deleted successfully', 'success')
     } catch (err) {
-      setError(err?.message || 'Failed to delete user')
+      const errorMessage = err?.message || 'Failed to delete user'
+      setError(errorMessage)
+      showSnackbar(errorMessage, 'error')
+    } finally {
+      setConfirmOpen(false)
+      setItemToDelete(null)
     }
   }
 
@@ -162,7 +192,7 @@ export function UsersPage() {
                 <button className="btn btn-secondary" type="button" onClick={() => openEdit(r)}>
                   Edit
                 </button>
-                <button className="btn btn-secondary" type="button" onClick={() => onDelete(r)}>
+                <button className="btn btn-secondary" type="button" onClick={() => handleDeleteClick(r)}>
                   Delete
                 </button>
               </div>
@@ -240,6 +270,27 @@ export function UsersPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete User"
+        message={`Are you sure you want to delete user ${itemToDelete?.email || itemToDelete?.userId}? This action cannot be undone.`}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => {
+          setConfirmOpen(false)
+          setItemToDelete(null)
+        }}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+      />
+
+      <Snackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        type={snackbar.type}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      />
     </Page>
   )
 }
