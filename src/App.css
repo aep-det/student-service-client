@@ -135,12 +135,29 @@
 .form {
   display: grid;
   gap: 12px;
-  max-width: 520px;
+  max-width: 720px;
+}
+
+.form-two-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-full-width {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .form-two-column {
+    grid-template-columns: 1fr;
+  }
 }
 
 .form-actions {
   display: flex;
   gap: 10px;
+  grid-column: 1 / -1;
 }
 
 .field {
