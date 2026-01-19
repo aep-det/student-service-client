@@ -6,6 +6,7 @@ import { Field } from '../components/Field'
 import { Modal } from '../components/Modal'
 import { Page } from '../components/Page'
 import { Table } from '../components/Table'
+import { TableSkeleton } from '../components/Skeleton'
 
 export function LecturersPage() {
   const [data, setData] = useState(null)
@@ -98,8 +99,17 @@ export function LecturersPage() {
       }
     >
       {error ? <Alert type="error">{error}</Alert> : null}
-      {loading ? <p>Loading…</p> : null}
-      <Table
+      {loading ? (
+        <TableSkeleton
+          columns={[
+            { key: 'lecturerId', header: 'ID' },
+            { key: 'name', header: 'Name' },
+            { key: 'email', header: 'Email' },
+            { key: 'specialization', header: 'Specialization' },
+          ]}
+        />
+      ) : (
+        <Table
         keyField="lecturerId"
         columns={[
           { key: 'lecturerId', header: 'ID', render: (r) => r.lecturerId },
@@ -109,6 +119,7 @@ export function LecturersPage() {
         ]}
         rows={rows}
       />
+      )}
 
       <Modal title="Create lecturer" open={createOpen} onClose={closeModal}>
         {formError ? <Alert type="error">{formError}</Alert> : null}

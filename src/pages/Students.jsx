@@ -6,6 +6,7 @@ import { Field } from '../components/Field'
 import { Modal } from '../components/Modal'
 import { Page } from '../components/Page'
 import { Table } from '../components/Table'
+import { TableSkeleton } from '../components/Skeleton'
 
 export function StudentsPage() {
   const [data, setData] = useState(null)
@@ -159,8 +160,18 @@ export function StudentsPage() {
       }
     >
       {error ? <Alert type="error">{error}</Alert> : null}
-      {loading ? <p>Loading…</p> : null}
-      <Table
+      {loading ? (
+        <TableSkeleton
+          columns={[
+            { key: 'studentId', header: 'ID' },
+            { key: 'name', header: 'Name' },
+            { key: 'email', header: 'Email' },
+            { key: 'enrollmentDate', header: 'Enrollment' },
+            { key: 'actions', header: 'Actions' },
+          ]}
+        />
+      ) : (
+        <Table
         keyField="studentId"
         columns={[
           { key: 'studentId', header: 'ID', render: (r) => r.studentId },
@@ -184,6 +195,7 @@ export function StudentsPage() {
         ]}
         rows={rows}
       />
+      )}
 
       <Modal title="Create student" open={createOpen} onClose={closeModals}>
         {formError ? <Alert type="error">{formError}</Alert> : null}

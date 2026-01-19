@@ -6,6 +6,7 @@ import { Field } from '../components/Field'
 import { Modal } from '../components/Modal'
 import { Page } from '../components/Page'
 import { Table } from '../components/Table'
+import { TableSkeleton } from '../components/Skeleton'
 
 export function EnrollmentsPage() {
   const [data, setData] = useState(null)
@@ -129,8 +130,19 @@ export function EnrollmentsPage() {
       }
     >
       {error ? <Alert type="error">{error}</Alert> : null}
-      {loading ? <p>Loading…</p> : null}
-      <Table
+      {loading ? (
+        <TableSkeleton
+          columns={[
+            { key: 'enrollmentId', header: 'ID' },
+            { key: 'student', header: 'Student' },
+            { key: 'course', header: 'Course' },
+            { key: 'status', header: 'Status' },
+            { key: 'grade', header: 'Grade' },
+            { key: 'actions', header: 'Actions' },
+          ]}
+        />
+      ) : (
+        <Table
         keyField="enrollmentId"
         columns={[
           { key: 'enrollmentId', header: 'ID', render: (r) => r.enrollmentId },
@@ -155,6 +167,7 @@ export function EnrollmentsPage() {
         ]}
         rows={rows}
       />
+      )}
 
       <Modal title="Create enrollment" open={createOpen} onClose={closeModals}>
         {formError ? <Alert type="error">{formError}</Alert> : null}
