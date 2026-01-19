@@ -6,6 +6,7 @@ import { Field } from '../components/Field'
 import { Modal } from '../components/Modal'
 import { Page } from '../components/Page'
 import { Table } from '../components/Table'
+import { TableSkeleton } from '../components/Skeleton'
 
 export function UsersPage() {
   const [data, setData] = useState(null)
@@ -135,8 +136,18 @@ export function UsersPage() {
       }
     >
       {error ? <Alert type="error">{error}</Alert> : null}
-      {loading ? <p>Loading…</p> : null}
-      <Table
+      {loading ? (
+        <TableSkeleton
+          columns={[
+            { key: 'userId', header: 'ID' },
+            { key: 'name', header: 'Name' },
+            { key: 'email', header: 'Email' },
+            { key: 'role', header: 'Role' },
+            { key: 'actions', header: 'Actions' },
+          ]}
+        />
+      ) : (
+        <Table
         keyField="userId"
         columns={[
           { key: 'userId', header: 'ID', render: (r) => r.userId },
@@ -160,6 +171,7 @@ export function UsersPage() {
         ]}
         rows={rows}
       />
+      )}
 
       <Modal title="Create user" open={createOpen} onClose={closeModals}>
         {formError ? <Alert type="error">{formError}</Alert> : null}
@@ -218,7 +230,7 @@ export function UsersPage() {
               placeholder="Leave blank to keep current"
             />
           </Field>
-          <Field label="Role (read-only here)">
+          <Field label="Role">
             <input value={role} readOnly />
           </Field>
           <div className="form-actions">

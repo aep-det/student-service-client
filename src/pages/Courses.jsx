@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { coursesApi } from '../api'
+import { coursesApi, lecturersApi } from '../api'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { Field } from '../components/Field'
 import { Modal } from '../components/Modal'
 import { Page } from '../components/Page'
 import { Table } from '../components/Table'
+import { TableSkeleton } from '../components/Skeleton'
 
 export function CoursesPage() {
   const [data, setData] = useState(null)
@@ -17,6 +18,8 @@ export function CoursesPage() {
   const [selected, setSelected] = useState(null)
   const [formError, setFormError] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [lecturers, setLecturers] = useState([])
+  const [loadingLecturers, setLoadingLecturers] = useState(false)
 
   const [courseCode, setCourseCode] = useState('')
   const [title, setTitle] = useState('')
@@ -41,8 +44,22 @@ export function CoursesPage() {
     setCourseMetadata('')
   }
 
+  const loadLecturers = async () => {
+    setLoadingLecturers(true)
+    try {
+      const res = await lecturersApi.list({ page: 0, size: 1000 })
+      setLecturers(res?.data?.content || [])
+    } catch (err) {
+      console.error('Failed to load lecturers:', err)
+      setLecturers([])
+    } finally {
+      setLoadingLecturers(false)
+    }
+  }
+
   const openCreate = () => {
     resetForm()
+    loadLecturers()
     setCreateOpen(true)
   }
 
@@ -58,6 +75,7 @@ export function CoursesPage() {
     setEndDate(course?.endDate || '')
     setCapacity(course?.capacity ?? '')
     setCourseMetadata(course?.courseMetadata || '')
+    loadLecturers()
     setEditOpen(true)
   }
 
@@ -163,8 +181,19 @@ export function CoursesPage() {
       }
     >
       {error ? <Alert type="error">{error}</Alert> : null}
-      {loading ? <p>Loading…</p> : null}
-      <Table
+      {loading ? (
+        <TableSkeleton
+          columns={[
+            { key: 'courseId', header: 'ID' },
+            { key: 'courseCode', header: 'Code' },
+            { key: 'title', header: 'Title' },
+            { key: 'credits', header: 'Credits' },
+            { key: 'capacity', header: 'Capacity' },
+            { key: 'actions', header: 'Actions' },
+          ]}
+        />
+      ) : (
+        <Table
         keyField="courseId"
         columns={[
           { key: 'courseId', header: 'ID', render: (r) => r.courseId },
@@ -189,6 +218,7 @@ export function CoursesPage() {
         ]}
         rows={rows}
       />
+      )}
 
       <Modal title="Create course" open={createOpen} onClose={closeModals}>
         {formError ? <Alert type="error">{formError}</Alert> : null}
@@ -205,8 +235,19 @@ export function CoursesPage() {
           <Field label="Credits">
             <input value={credits} onChange={(e) => setCredits(e.target.value)} type="number" min={1} max={10} />
           </Field>
-          <Field label="Lecturer ID">
-            <input value={lecturerId} onChange={(e) => setLecturerId(e.target.value)} type="number" min={1} />
+          <Field label="Lecturer">
+            <select
+              value={lecturerId}
+              onChange={(e) => setLecturerId(e.target.value)}
+              disabled={loadingLecturers}
+            >
+              <option value="">Select a lecturer</option>
+              {lecturers.map((lecturer) => (
+                <option key={lecturer.lecturerId} value={lecturer.lecturerId}>
+                  {lecturer.user?.firstName} {lecturer.user?.lastName}
+                </option>
+              ))}
+            </select>
           </Field>
           <Field label="Start date">
             <input value={startDate} onChange={(e) => setStartDate(e.target.value)} type="date" />
@@ -243,8 +284,19 @@ export function CoursesPage() {
           <Field label="Credits">
             <input value={credits} onChange={(e) => setCredits(e.target.value)} type="number" min={1} max={10} />
           </Field>
-          <Field label="Lecturer ID">
-            <input value={lecturerId} onChange={(e) => setLecturerId(e.target.value)} type="number" min={1} />
+          <Field label="Lecturer">
+            <select
+              value={lecturerId}
+              onChange={(e) => setLecturerId(e.target.value)}
+              disabled={loadingLecturers}
+            >
+              <option value="">Select a lecturer</option>
+              {lecturers.map((lecturer) => (
+                <option key={lecturer.lecturerId} value={lecturer.lecturerId}>
+                  {lecturer.user?.firstName} {lecturer.user?.lastName}
+                </option>
+              ))}
+            </select>
           </Field>
           <Field label="Start date">
             <input value={startDate} onChange={(e) => setStartDate(e.target.value)} type="date" />
