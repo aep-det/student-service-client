@@ -1,0 +1,166 @@
+:root {
+  /* Avant‑garde but tasteful: glassy surfaces + restrained neon accents */
+  color-scheme: light dark;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter,
+    Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  line-height: 1.5;
+  font-weight: 450;
+
+  --bg: #0b0c10;
+  --bg2: #111227;
+  --text: rgba(255, 255, 255, 0.9);
+  --muted: rgba(255, 255, 255, 0.68);
+  --border: rgba(255, 255, 255, 0.12);
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface2: rgba(255, 255, 255, 0.09);
+  --shadow: 0 22px 80px rgba(0, 0, 0, 0.55);
+  --accent: #7c5cff;
+  --accent2: #20e3b2;
+  --danger: #ff5a73;
+
+  color: var(--text);
+  background-color: var(--bg);
+
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: var(--accent2);
+  text-decoration: inherit;
+}
+a:hover {
+  color: #64f6cf;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 800px at 8% 12%, rgba(124, 92, 255, 0.28), transparent 60%),
+    radial-gradient(900px 600px at 92% 24%, rgba(32, 227, 178, 0.20), transparent 55%),
+    radial-gradient(900px 900px at 50% 110%, rgba(124, 92, 255, 0.16), transparent 55%),
+    linear-gradient(180deg, var(--bg), var(--bg2));
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(124, 92, 255, 0.35);
+}
+
+*:focus-visible {
+  outline: 3px solid rgba(124, 92, 255, 0.55);
+  outline-offset: 2px;
+}
+
+input {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 10px 12px;
+  color: inherit;
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  transition: border-color 120ms ease, background 120ms ease, box-shadow 140ms ease;
+}
+
+input:hover {
+  border-color: rgba(124, 92, 255, 0.35);
+}
+
+input:focus {
+  border-color: rgba(124, 92, 255, 0.6);
+  box-shadow: 0 0 0 6px rgba(124, 92, 255, 0.15);
+}
+
+select {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 10px 12px;
+  color: inherit;
+  transition: border-color 120ms ease, background 120ms ease, box-shadow 140ms ease;
+}
+
+select:hover {
+  border-color: rgba(32, 227, 178, 0.35);
+}
+
+select:focus {
+  border-color: rgba(32, 227, 178, 0.6);
+  box-shadow: 0 0 0 6px rgba(32, 227, 178, 0.12);
+}
+
+@media (prefers-color-scheme: light) {
+  input {
+    border-color: var(--border);
+    background: var(--surface);
+  }
+
+  select {
+    border-color: var(--border);
+    background: var(--surface);
+  }
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: border-color 120ms ease, transform 120ms ease, filter 120ms ease,
+    background 120ms ease;
+}
+button:hover {
+  border-color: rgba(124, 92, 255, 0.45);
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+button:focus,
+button:focus-visible {
+  outline: 3px solid rgba(124, 92, 255, 0.55);
+  outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #fbfbff;
+    --bg2: #f3f6ff;
+    --text: rgba(16, 18, 24, 0.92);
+    --muted: rgba(16, 18, 24, 0.68);
+    --border: rgba(16, 18, 24, 0.12);
+    --surface: rgba(16, 18, 24, 0.04);
+    --surface2: rgba(16, 18, 24, 0.06);
+    --shadow: 0 22px 80px rgba(16, 18, 24, 0.18);
+  }
+  a:hover {
+    color: #5a7dff;
+  }
+  button {
+    background-color: rgba(16, 18, 24, 0.04);
+  }
+
+  body {
+    background:
+      radial-gradient(1100px 700px at 10% 14%, rgba(124, 92, 255, 0.20), transparent 60%),
+      radial-gradient(900px 650px at 92% 22%, rgba(32, 227, 178, 0.16), transparent 60%),
+      linear-gradient(180deg, var(--bg), var(--bg2));
+  }
+}

@@ -1,0 +1,29 @@
+
+@ss=https://gleaming-rosabelle-tsi-uni-bfd33a9f.koyeb.app
+
+###
+
+# @name login
+curl -k -X POST "https://gleaming-rosabelle-tsi-uni-bfd33a9f.koyeb.app/api/v1/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@student-service.com",
+    "password": "admin123"
+  }'
+
+###
+
+# @name logixn
+POST {{ss}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@student-service.com",
+  "password": "admin123",
+}
+
+###
+
+GET {{ss}}/api/v1/students
+Authorization: Bearer {{login}}
+
