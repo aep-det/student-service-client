@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useAuth } from '../auth/useAuth'
 import { coursesApi, lecturersApi } from '../api'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
@@ -11,6 +12,9 @@ import { Table } from '../components/Table'
 import { TableSkeleton } from '../components/Skeleton'
 
 export function CoursesPage() {
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'Admin'
+
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -25,6 +29,11 @@ export function CoursesPage() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [itemToDelete, setItemToDelete] = useState(null)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', type: 'success' })
+
+  const [membersOpen, setMembersOpen] = useState(false)
+  const [membersCourse, setMembersCourse] = useState(null)
+  const [membersLoading, setMembersLoading] = useState(false)
+  const [membersList, setMembersList] = useState([])
 
   const [courseCode, setCourseCode] = useState('')
   const [title, setTitle] = useState('')
@@ -90,6 +99,38 @@ export function CoursesPage() {
     setSelected(null)
     setSaving(false)
     setFormError(null)
+  }
+
+  const openCourseMembers = async (course) => {
+    setMembersCourse(course)
+    setMembersOpen(true)
+    setMembersList([])
+    const lid = course?.lecturer?.lecturerId
+    const cid = course?.courseId
+    if (!lid || !cid) {
+      setMembersLoading(false)
+      return
+    }
+    setMembersLoading(true)
+    try {
+      const res = await lecturersApi.courseStudents({
+        lecturerId: lid,
+        courseId: cid,
+        pageable: { page: 0, size: 50 },
+      })
+      setMembersList(res?.data?.content || [])
+    } catch (err) {
+      console.error('Failed to load course members:', err)
+      setMembersList([])
+    } finally {
+      setMembersLoading(false)
+    }
+  }
+
+  const closeMembersModal = () => {
+    setMembersOpen(false)
+    setMembersCourse(null)
+    setMembersList([])
   }
 
   const reload = async () => {
@@ -204,9 +245,11 @@ export function CoursesPage() {
     <Page
       title="Courses"
       actions={
-        <Button type="button" onClick={openCreate}>
-          Create course
-        </Button>
+        isAdmin ? (
+          <Button type="button" onClick={openCreate}>
+            Create course
+          </Button>
+        ) : null
       }
     >
       {error ? <Alert type="error">{error}</Alert> : null}
@@ -233,19 +276,26 @@ export function CoursesPage() {
           {
             key: 'actions',
             header: 'Actions',
-            render: (r) => (
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button className="btn btn-secondary" type="button" onClick={() => openEdit(r)}>
-                  Edit
-                </button>
-                <button className="btn btn-secondary" type="button" onClick={() => handleDeleteClick(r)}>
-                  Delete
-                </button>
-              </div>
-            ),
+            render: (r) =>
+              isAdmin ? (
+                <div
+                  style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button className="btn btn-secondary" type="button" onClick={() => openEdit(r)}>
+                    Edit
+                  </button>
+                  <button className="btn btn-secondary" type="button" onClick={() => handleDeleteClick(r)}>
+                    Delete
+                  </button>
+                </div>
+              ) : (
+                '—'
+              ),
           },
         ]}
         rows={rows}
+        onRowClick={openCourseMembers}
       />
       )}
 
@@ -359,6 +409,60 @@ export function CoursesPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        title={`Course members – ${membersCourse?.courseCode || ''}`}
+        open={membersOpen}
+        onClose={closeMembersModal}
+      >
+        {membersLoading ? (
+          <TableSkeleton
+            columns={[
+              { key: 'student', header: 'Student' },
+              { key: 'email', header: 'Email' },
+              { key: 'status', header: 'Status' },
+            ]}
+            rows={5}
+          />
+        ) : (
+          <>
+            <p style={{ marginBottom: 12, marginTop: 0 }}>
+              <strong>Lecturer:</strong>{' '}
+              {membersCourse?.lecturer
+                ? `${[membersCourse.lecturer.user?.firstName, membersCourse.lecturer.user?.lastName].filter(Boolean).join(' ')} (${membersCourse.lecturer.user?.email || ''})`
+                : 'No lecturer assigned.'}
+            </p>
+            {membersCourse?.lecturer && (
+              membersList.length === 0 ? (
+                <p>No students enrolled.</p>
+              ) : (
+                <div className="table-wrap">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Student</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {membersList.map((e) => (
+                        <tr key={e.enrollmentId}>
+                          <td>
+                            {[e.student?.user?.firstName, e.student?.user?.lastName].filter(Boolean).join(' ') || '—'}
+                          </td>
+                          <td>{e.student?.user?.email || '—'}</td>
+                          <td>{e.status || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            )}
+          </>
+        )}
       </Modal>
 
       <ConfirmDialog

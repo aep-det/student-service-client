@@ -277,6 +277,15 @@
   background: rgba(124, 92, 255, 0.06);
 }
 
+.table-row-clickable {
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.table-row-clickable:hover {
+  background: rgba(124, 92, 255, 0.1);
+}
+
 .table-empty {
   text-align: center;
   opacity: 0.75;
