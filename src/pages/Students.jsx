@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useAuth } from '../auth/useAuth'
 import { studentsApi } from '../api'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
@@ -11,9 +12,16 @@ import { Table } from '../components/Table'
 import { TableSkeleton } from '../components/Skeleton'
 
 export function StudentsPage() {
+  const { user } = useAuth()
+  const isLecturer = user?.role === 'Lecturer'
+
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const isFirstLoad = useRef(true)
+  const inFlightRef = useRef(false)
+  const lastQueryRef = useRef('')
 
   const [createOpen, setCreateOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -74,21 +82,42 @@ export function StudentsPage() {
   }
 
   const reload = async () => {
+    const q = searchQuery.trim()
+    if (inFlightRef.current && lastQueryRef.current === q) return
+    inFlightRef.current = true
+    lastQueryRef.current = q
     setLoading(true)
     setError(null)
     try {
-      const res = await studentsApi.list({ page: 0, size: 20 })
-      setData(res)
+      const res = await studentsApi.list({ page: 0, size: q ? 500 : 20 })
+      const list = res?.data?.content || []
+      const filtered = q
+        ? list.filter((s) => {
+            const ql = q.toLowerCase()
+            const name = `${s.user?.firstName || ''} ${s.user?.lastName || ''}`.toLowerCase()
+            const email = (s.user?.email || '').toLowerCase()
+            return name.includes(ql) || email.includes(ql)
+          })
+        : list
+      setData({ data: { ...res?.data, content: filtered } })
     } catch (err) {
       setError(err?.message || 'Failed to load students')
     } finally {
+      inFlightRef.current = false
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    reload()
-  }, [])
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false
+      reload()
+      return
+    }
+    const t = setTimeout(reload, 400)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery])
 
   const showSnackbar = (message, type = 'success') => {
     setSnackbar({ open: true, message, type })
@@ -183,11 +212,23 @@ export function StudentsPage() {
     <Page
       title="Students"
       actions={
-        <Button type="button" onClick={openCreate}>
-          Create student
-        </Button>
+        isLecturer ? null : (
+          <Button type="button" onClick={openCreate}>
+            Create student
+          </Button>
+        )
       }
     >
+      <div className="page-toolbar" style={{ marginBottom: 12 }}>
+        <input
+          type="search"
+          placeholder="Search by name or email…"
+          aria-label="Search students by name or email"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ maxWidth: 280 }}
+        />
+      </div>
       {error ? <Alert type="error">{error}</Alert> : null}
       {loading ? (
         <TableSkeleton
@@ -215,9 +256,11 @@ export function StudentsPage() {
                 <button className="btn btn-secondary" type="button" onClick={() => openEdit(r)}>
                   Edit
                 </button>
-                <button className="btn btn-secondary" type="button" onClick={() => handleDeleteClick(r)}>
-                  Delete
-                </button>
+                {isLecturer ? null : (
+                  <button className="btn btn-secondary" type="button" onClick={() => handleDeleteClick(r)}>
+                    Delete
+                  </button>
+                )}
               </div>
             ),
           },

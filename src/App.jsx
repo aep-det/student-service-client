@@ -2,6 +2,7 @@ import './App.css'
 
 import { NavLink, Route, Routes } from 'react-router-dom'
 import { useAuth } from './auth/useAuth'
+import { AdminOrLecturerRoute } from './routes/AdminOrLecturerRoute'
 import { AdminRoute } from './routes/AdminRoute'
 import { ProtectedRoute } from './routes/ProtectedRoute'
 import { AdminDashboardPage } from './pages/AdminDashboard'
@@ -30,7 +31,9 @@ function App() {
             </NavLink>
             {isAuthenticated ? (
               <>
-                <NavLink to="/students">Students</NavLink>
+                {(user?.role === 'Admin' || user?.role === 'Lecturer') ? (
+                  <NavLink to="/students">Students</NavLink>
+                ) : null}
                 <NavLink to="/courses">Courses</NavLink>
                 <NavLink to="/enrollments">Enrollments</NavLink>
                 <NavLink to="/lecturers">Lecturers</NavLink>
@@ -80,7 +83,9 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
 
           <Route element={<ProtectedRoute />}>
-            <Route path="/students" element={<StudentsPage />} />
+            <Route element={<AdminOrLecturerRoute />}>
+              <Route path="/students" element={<StudentsPage />} />
+            </Route>
             <Route path="/courses" element={<CoursesPage />} />
             <Route path="/enrollments" element={<EnrollmentsPage />} />
             <Route path="/lecturers" element={<LecturersPage />} />

@@ -124,7 +124,6 @@ export function MyCoursesPage() {
                   { key: 'status', header: 'Status' },
                   { key: 'grade', header: 'Grade' },
                   { key: 'enrollmentDate', header: 'Enrolled' },
-                  { key: 'actions', header: 'Actions' },
                 ]
               : [
                   { key: 'courseCode', header: 'Code' },
@@ -148,22 +147,6 @@ export function MyCoursesPage() {
               key: 'enrollmentDate',
               header: 'Enrolled',
               render: (r) => (r.enrollmentDate ? new Date(r.enrollmentDate).toLocaleDateString() : '—'),
-            },
-            {
-              key: 'actions',
-              header: 'Actions',
-              render: (r) =>
-                r.status !== 'Dropped' ? (
-                  <button
-                    className="btn btn-secondary"
-                    type="button"
-                    onClick={() => handleDropClick(r)}
-                  >
-                    Drop
-                  </button>
-                ) : (
-                  '—'
-                ),
             },
           ]}
           rows={enrollments}
