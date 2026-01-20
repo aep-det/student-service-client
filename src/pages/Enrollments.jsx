@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useAuth } from '../auth/useAuth'
 import { enrollmentsApi, studentsApi, coursesApi } from '../api'
 import { Alert } from '../components/Alert'
 import { Autocomplete } from '../components/Autocomplete'
@@ -12,9 +13,14 @@ import { Table } from '../components/Table'
 import { TableSkeleton } from '../components/Skeleton'
 
 export function EnrollmentsPage() {
+  const { user } = useAuth()
+  const isStudent = user?.role === 'Student'
+
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [myStudentId, setMyStudentId] = useState(null)
+  const [enrollSelfCourseId, setEnrollSelfCourseId] = useState('')
 
   const [createOpen, setCreateOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -31,7 +37,11 @@ export function EnrollmentsPage() {
 
   const resetCreate = () => {
     setFormError(null)
-    setEnrollmentRows([{ studentId: '', courseId: '', id: Date.now() }])
+    if (isStudent) {
+      setEnrollSelfCourseId('')
+    } else {
+      setEnrollmentRows([{ studentId: '', courseId: '', id: Date.now() }])
+    }
   }
 
   const addEnrollmentRow = () => {
@@ -112,8 +122,28 @@ export function EnrollmentsPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await enrollmentsApi.list({ page: 0, size: 20 })
-      setData(res)
+      if (isStudent) {
+        let sid = myStudentId
+        if (sid == null && user?.email) {
+          try {
+            const r = await studentsApi.byEmail(user.email)
+            sid = r?.data?.studentId ?? null
+            setMyStudentId(sid)
+          } catch {
+            setMyStudentId(null)
+            sid = null
+          }
+        }
+        if (sid == null) {
+          setData({ data: { content: [] } })
+          return
+        }
+        const res = await enrollmentsApi.byStudent(sid, { page: 0, size: 20 })
+        setData(res)
+      } else {
+        const res = await enrollmentsApi.list({ page: 0, size: 20 })
+        setData(res)
+      }
     } catch (err) {
       setError(err?.message || 'Failed to load enrollments')
     } finally {
@@ -123,15 +153,38 @@ export function EnrollmentsPage() {
 
   useEffect(() => {
     reload()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStudent, user?.email])
 
   const showSnackbar = (message, type = 'success') => {
     setSnackbar({ open: true, message, type })
   }
 
+  const onEnrollSelf = async (e) => {
+    e.preventDefault()
+    if (myStudentId == null || !enrollSelfCourseId) return
+    setSaving(true)
+    setFormError(null)
+    try {
+      await enrollmentsApi.create({
+        studentId: myStudentId,
+        courseId: Number(enrollSelfCourseId),
+      })
+      closeModals()
+      await reload()
+      showSnackbar('Enrolled successfully', 'success')
+    } catch (err) {
+      const errMsg = err?.message || 'Failed to enroll'
+      setFormError(errMsg)
+      showSnackbar(errMsg, 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const onCreate = async (e) => {
     e.preventDefault()
-    
+
     // Validate all rows
     const validRows = enrollmentRows.filter((row) => row.studentId && row.courseId)
     if (validRows.length === 0) {
@@ -256,12 +309,23 @@ export function EnrollmentsPage() {
     <Page
       title="Enrollments"
       actions={
-        <Button type="button" onClick={openCreate}>
-          Create enrollment
-        </Button>
+        isStudent ? (
+          myStudentId ? (
+            <Button type="button" onClick={openCreate}>
+              Enroll myself
+            </Button>
+          ) : null
+        ) : (
+          <Button type="button" onClick={openCreate}>
+            Create enrollment
+          </Button>
+        )
       }
     >
       {error ? <Alert type="error">{error}</Alert> : null}
+      {isStudent && !loading && myStudentId == null && user?.email ? (
+        <Alert type="warning">Student profile not found. You cannot enroll in courses.</Alert>
+      ) : null}
       {loading ? (
         <TableSkeleton
           columns={[
@@ -303,89 +367,116 @@ export function EnrollmentsPage() {
       />
       )}
 
-      <Modal title="Create enrollment" open={createOpen} onClose={closeModals}>
+      <Modal
+        title={isStudent ? 'Enroll myself' : 'Create enrollment'}
+        open={createOpen}
+        onClose={closeModals}
+      >
         {formError ? <Alert type="error">{formError}</Alert> : null}
-        <form className="form" onSubmit={onCreate}>
-          <div style={{ marginBottom: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontSize: '13px', opacity: 0.85 }}>Enrollments</span>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={addEnrollmentRow}
+        {isStudent && !myStudentId ? (
+          <p>Student profile not found.</p>
+        ) : isStudent ? (
+          <form className="form" onSubmit={onEnrollSelf}>
+            <Field label="Course">
+              <Autocomplete
+                value={enrollSelfCourseId}
+                onChange={(value) => setEnrollSelfCourseId(value)}
+                onSearch={searchCourses}
+                getDisplayText={getCourseDisplayText}
+                getValue={getCourseValue}
+                placeholder="Search by course title..."
                 disabled={saving}
-                style={{ fontSize: '12px', padding: '6px 10px' }}
-              >
-                + Add Row
+              />
+            </Field>
+            <div className="form-actions">
+              <Button type="submit" disabled={saving || !enrollSelfCourseId}>
+                {saving ? 'Enrolling…' : 'Enroll'}
               </Button>
             </div>
-            <div style={{ display: 'grid', gap: '12px' }}>
-              {enrollmentRows.map((row, index) => (
-                <div
-                  key={row.id}
-                  style={{
-                    padding: '12px',
-                    border: '1px solid var(--border)',
-                    borderRadius: '8px',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                  }}
+          </form>
+        ) : (
+          <form className="form" onSubmit={onCreate}>
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '13px', opacity: 0.85 }}>Enrollments</span>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={addEnrollmentRow}
+                  disabled={saving}
+                  style={{ fontSize: '12px', padding: '6px 10px' }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '12px', opacity: 0.7 }}>Enrollment {index + 1}</span>
-                    {enrollmentRows.length > 1 && (
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => removeEnrollmentRow(row.id)}
-                        disabled={saving}
-                        style={{ fontSize: '12px', padding: '4px 8px' }}
-                      >
-                        Remove
-                      </button>
-                    )}
+                  + Add Row
+                </Button>
+              </div>
+              <div style={{ display: 'grid', gap: '12px' }}>
+                {enrollmentRows.map((row, index) => (
+                  <div
+                    key={row.id}
+                    style={{
+                      padding: '12px',
+                      border: '1px solid var(--border)',
+                      borderRadius: '8px',
+                      background: 'rgba(255, 255, 255, 0.02)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '12px', opacity: 0.7 }}>Enrollment {index + 1}</span>
+                      {enrollmentRows.length > 1 && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={() => removeEnrollmentRow(row.id)}
+                          disabled={saving}
+                          style={{ fontSize: '12px', padding: '4px 8px' }}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ display: 'grid', gap: '8px' }}>
+                      <Field label="Student">
+                        <Autocomplete
+                          value={row.studentId}
+                          onChange={(value) => updateEnrollmentRow(row.id, 'studentId', value)}
+                          onSearch={searchStudents}
+                          getDisplayText={getStudentDisplayText}
+                          getValue={getStudentValue}
+                          placeholder="Search by name or email..."
+                          disabled={saving}
+                        />
+                      </Field>
+                      <Field label="Course">
+                        <Autocomplete
+                          value={row.courseId}
+                          onChange={(value) => updateEnrollmentRow(row.id, 'courseId', value)}
+                          onSearch={searchCourses}
+                          getDisplayText={getCourseDisplayText}
+                          getValue={getCourseValue}
+                          placeholder="Search by course title..."
+                          disabled={saving}
+                        />
+                      </Field>
+                    </div>
                   </div>
-                  <div style={{ display: 'grid', gap: '8px' }}>
-                    <Field label="Student">
-                      <Autocomplete
-                        value={row.studentId}
-                        onChange={(value) => updateEnrollmentRow(row.id, 'studentId', value)}
-                        onSearch={searchStudents}
-                        getDisplayText={getStudentDisplayText}
-                        getValue={getStudentValue}
-                        placeholder="Search by name or email..."
-                        disabled={saving}
-                      />
-                    </Field>
-                    <Field label="Course">
-                      <Autocomplete
-                        value={row.courseId}
-                        onChange={(value) => updateEnrollmentRow(row.id, 'courseId', value)}
-                        onSearch={searchCourses}
-                        getDisplayText={getCourseDisplayText}
-                        getValue={getCourseValue}
-                        placeholder="Search by course title..."
-                        disabled={saving}
-                      />
-                    </Field>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="form-actions">
-            <Button
-              type="submit"
-              disabled={
-                saving ||
-                enrollmentRows.every((row) => !row.studentId || !row.courseId)
-              }
-            >
-              {saving
-                ? `Creating ${enrollmentRows.filter((r) => r.studentId && r.courseId).length}…`
-                : `Create ${enrollmentRows.filter((r) => r.studentId && r.courseId).length || ''} enrollment${enrollmentRows.filter((r) => r.studentId && r.courseId).length !== 1 ? 's' : ''}`}
-            </Button>
-          </div>
-        </form>
+            <div className="form-actions">
+              <Button
+                type="submit"
+                disabled={
+                  saving ||
+                  enrollmentRows.every((row) => !row.studentId || !row.courseId)
+                }
+              >
+                {saving
+                  ? `Creating ${enrollmentRows.filter((r) => r.studentId && r.courseId).length}…`
+                  : `Create ${enrollmentRows.filter((r) => r.studentId && r.courseId).length || ''} enrollment${enrollmentRows.filter((r) => r.studentId && r.courseId).length !== 1 ? 's' : ''}`}
+              </Button>
+            </div>
+          </form>
+        )}
       </Modal>
 
       <Modal title="Edit enrollment" open={editOpen} onClose={closeModals}>

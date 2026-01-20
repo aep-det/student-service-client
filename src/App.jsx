@@ -2,6 +2,7 @@ import './App.css'
 
 import { NavLink, Route, Routes } from 'react-router-dom'
 import { useAuth } from './auth/useAuth'
+import { AdminRoute } from './routes/AdminRoute'
 import { ProtectedRoute } from './routes/ProtectedRoute'
 import { AdminDashboardPage } from './pages/AdminDashboard'
 import { CoursesPage } from './pages/Courses'
@@ -9,6 +10,7 @@ import { EnrollmentsPage } from './pages/Enrollments'
 import { HomePage } from './pages/Home'
 import { LecturersPage } from './pages/Lecturers'
 import { LoginPage } from './pages/Login'
+import { MyCoursesPage } from './pages/MyCourses'
 import { RegisterPage } from './pages/Register'
 import { SeedPage } from './pages/Seed'
 import { StudentsPage } from './pages/Students'
@@ -32,9 +34,16 @@ function App() {
                 <NavLink to="/courses">Courses</NavLink>
                 <NavLink to="/enrollments">Enrollments</NavLink>
                 <NavLink to="/lecturers">Lecturers</NavLink>
-                <NavLink to="/users">Users</NavLink>
-                <NavLink to="/admin">Admin</NavLink>
-                <NavLink to="/seed">Seed</NavLink>
+                {(user?.role === 'Student' || user?.role === 'Lecturer') ? (
+                  <NavLink to="/my-courses">My courses</NavLink>
+                ) : null}
+                {user?.role === 'Admin' ? (
+                  <>
+                    <NavLink to="/users">Users</NavLink>
+                    <NavLink to="/admin">Admin</NavLink>
+                    <NavLink to="/seed">Seed</NavLink>
+                  </>
+                ) : null}
               </>
             ) : null}
           </nav>
@@ -75,9 +84,12 @@ function App() {
             <Route path="/courses" element={<CoursesPage />} />
             <Route path="/enrollments" element={<EnrollmentsPage />} />
             <Route path="/lecturers" element={<LecturersPage />} />
-            <Route path="/users" element={<UsersPage />} />
-            <Route path="/admin" element={<AdminDashboardPage />} />
-            <Route path="/seed" element={<SeedPage />} />
+            <Route path="/my-courses" element={<MyCoursesPage />} />
+            <Route element={<AdminRoute />}>
+              <Route path="/users" element={<UsersPage />} />
+              <Route path="/admin" element={<AdminDashboardPage />} />
+              <Route path="/seed" element={<SeedPage />} />
+            </Route>
           </Route>
         </Routes>
       </main>
