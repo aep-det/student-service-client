@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useAuth } from '../auth/useAuth'
 import { coursesApi, lecturersApi } from '../api'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
@@ -10,9 +11,15 @@ import { Table } from '../components/Table'
 import { TableSkeleton } from '../components/Skeleton'
 
 export function LecturersPage() {
+  const { user } = useAuth()
+  const isLecturer = user?.role === 'Lecturer'
+
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const isFirstLoad = useRef(true)
+  const lastSearchedRef = useRef(null)
 
   const [createOpen, setCreateOpen] = useState(false)
   const [formError, setFormError] = useState(null)
@@ -85,8 +92,19 @@ export function LecturersPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await lecturersApi.list({ page: 0, size: 20 })
-      setData(res)
+      const q = searchQuery.trim()
+      const res = await lecturersApi.list({ page: 0, size: q ? 500 : 20 })
+      const list = res?.data?.content || []
+      const filtered = q
+        ? list.filter((l) => {
+            const ql = q.toLowerCase()
+            const name = `${l.user?.firstName || ''} ${l.user?.lastName || ''}`.toLowerCase()
+            const email = (l.user?.email || '').toLowerCase()
+            const spec = (l.specialization || '').toLowerCase()
+            return name.includes(ql) || email.includes(ql) || spec.includes(ql)
+          })
+        : list
+      setData({ data: { ...res?.data, content: filtered } })
     } catch (err) {
       setError(err?.message || 'Failed to load lecturers')
     } finally {
@@ -95,8 +113,18 @@ export function LecturersPage() {
   }
 
   useEffect(() => {
-    reload()
-  }, [])
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false
+      lastSearchedRef.current = searchQuery
+      reload()
+      return
+    }
+    if (lastSearchedRef.current === searchQuery) return
+    lastSearchedRef.current = searchQuery
+    const t = setTimeout(reload, 400)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery])
 
   const showSnackbar = (message, type = 'success') => {
     setSnackbar({ open: true, message, type })
@@ -134,11 +162,23 @@ export function LecturersPage() {
     <Page
       title="Lecturers"
       actions={
-        <Button type="button" onClick={openCreate}>
-          Create lecturer
-        </Button>
+        isLecturer ? null : (
+          <Button type="button" onClick={openCreate}>
+            Create lecturer
+          </Button>
+        )
       }
     >
+      <div className="page-toolbar" style={{ marginBottom: 12 }}>
+        <input
+          type="search"
+          placeholder="Search by name, email or specialization…"
+          aria-label="Search lecturers by name, email or specialization"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ maxWidth: 320 }}
+        />
+      </div>
       {error ? <Alert type="error">{error}</Alert> : null}
       {loading ? (
         <TableSkeleton

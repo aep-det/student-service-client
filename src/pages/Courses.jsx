@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/useAuth'
 import { coursesApi, lecturersApi } from '../api'
 import { Alert } from '../components/Alert'
@@ -14,10 +14,14 @@ import { TableSkeleton } from '../components/Skeleton'
 export function CoursesPage() {
   const { user } = useAuth()
   const isAdmin = user?.role === 'Admin'
+  const showActions = isAdmin
 
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const isFirstLoad = useRef(true)
+  const lastSearchedRef = useRef(null)
 
   const [createOpen, setCreateOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -137,7 +141,10 @@ export function CoursesPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await coursesApi.list({ page: 0, size: 20 })
+      const q = searchQuery.trim()
+      const res = q
+        ? await coursesApi.searchByTitle(q, { page: 0, size: 50 })
+        : await coursesApi.list({ page: 0, size: 20 })
       setData(res)
     } catch (err) {
       setError(err?.message || 'Failed to load courses')
@@ -147,8 +154,18 @@ export function CoursesPage() {
   }
 
   useEffect(() => {
-    reload()
-  }, [])
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false
+      lastSearchedRef.current = searchQuery
+      reload()
+      return
+    }
+    if (lastSearchedRef.current === searchQuery) return
+    lastSearchedRef.current = searchQuery
+    const t = setTimeout(reload, 400)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery])
 
   const showSnackbar = (message, type = 'success') => {
     setSnackbar({ open: true, message, type })
@@ -252,6 +269,16 @@ export function CoursesPage() {
         ) : null
       }
     >
+      <div className="page-toolbar" style={{ marginBottom: 12 }}>
+        <input
+          type="search"
+          placeholder="Search by title…"
+          aria-label="Search courses by title"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ maxWidth: 280 }}
+        />
+      </div>
       {error ? <Alert type="error">{error}</Alert> : null}
       {loading ? (
         <TableSkeleton
@@ -261,7 +288,7 @@ export function CoursesPage() {
             { key: 'title', header: 'Title' },
             { key: 'credits', header: 'Credits' },
             { key: 'capacity', header: 'Capacity' },
-            { key: 'actions', header: 'Actions' },
+            ...(showActions ? [{ key: 'actions', header: 'Actions' }] : []),
           ]}
         />
       ) : (
@@ -273,26 +300,27 @@ export function CoursesPage() {
           { key: 'title', header: 'Title', render: (r) => r.title },
           { key: 'credits', header: 'Credits', render: (r) => r.credits },
           { key: 'capacity', header: 'Capacity', render: (r) => r.capacity },
-          {
-            key: 'actions',
-            header: 'Actions',
-            render: (r) =>
-              isAdmin ? (
-                <div
-                  style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button className="btn btn-secondary" type="button" onClick={() => openEdit(r)}>
-                    Edit
-                  </button>
-                  <button className="btn btn-secondary" type="button" onClick={() => handleDeleteClick(r)}>
-                    Delete
-                  </button>
-                </div>
-              ) : (
-                '—'
-              ),
-          },
+          ...(showActions
+            ? [
+                {
+                  key: 'actions',
+                  header: 'Actions',
+                  render: (r) => (
+                    <div
+                      style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button className="btn btn-secondary" type="button" onClick={() => openEdit(r)}>
+                        Edit
+                      </button>
+                      <button className="btn btn-secondary" type="button" onClick={() => handleDeleteClick(r)}>
+                        Delete
+                      </button>
+                    </div>
+                  ),
+                },
+              ]
+            : []),
         ]}
         rows={rows}
         onRowClick={openCourseMembers}
